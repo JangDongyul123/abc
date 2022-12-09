@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc https://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+		<!-- servlet-context.xml은 웹컴포넌트 설정파일 -->
+
+	<!-- DispatcherServlet Context: defines this servlet's request-processing infrastructure -->
+	
+	<!-- Enables the Spring MVC @Controller programming model -->
+	<annotation-driven />
+	<!-- 이 태그는 Spring MVC가 @Controller에 요청을 보내기 위해 필요한 HandlerMapping과 HandlerAdapter를 bean으로 등록한다.
+https://gmlwjd9405.github.io/2018/12/18/spring-annotation-enable.html -->
+
+	<!-- ViewResolver가 servletDispatcher에게 .jsp파일의 위치를 알려준다 -->
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/views directory -->
+	<beans:bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/" />
+		<beans:property name="suffix" value=".jsp" />
+	</beans:bean>
+	
+	<view-controller path="/" view-name="home" />
+	
+	
+	<!-- Handles HTTP GET requests for /resources/** by efficiently serving up static resources in the ${webappRoot}/resources directory -->
+	<resources location="/WEB-INF/resources/" mapping="/**" />
+	<resources location="/WEB-INF/resources/js/" mapping="/js/**" />
+	<resources location="/WEB-INF/resources/css/" mapping="/css/**" />
+	<resources location="/WEB-INF/resources/images/" mapping="/images/**" />
+	<resources location="/WEB-INF/resources/font-awesome/" mapping="/font-awesome/**" />
+	<resources location="/WEB-INF/resources/assets/" mapping="/assets/**" />
+	
+	
+	<!-- 어노테이션을 쓸 패키지 위치 설정 -->
+	<context:component-scan base-package="com.coderby.myapp" />
+	
+	<beans:bean id="multipartResolver"
+	class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<beans:property name="maxUploadSize">
+			<beans:value>50000000</beans:value>
+		</beans:property>
+	</beans:bean>
+	
+		<interceptors>
+		<interceptor>
+			<mapping path="/file/**"/>
+			<mapping path="/board/write/**"/>
+			<mapping path="/board/update/**"/>
+			<mapping path="/board/reply/**"/>
+			<mapping path="/board/delete/**"/>
+			<exclude-mapping path="/board/cat/**"/>
+			<beans:bean class="com.coderby.myapp.common.filter.LoginInterceptor"></beans:bean>
+		</interceptor>
+		</interceptors>
+</beans:beans>

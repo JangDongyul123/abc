@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<!-- 프로퍼티 파일의 키를 가지고 해시테이블에 저장해준다. -->
+	<!-- 즉, 스프링이 알아서 프로퍼티 파일의 값을 읽어준다 -->	
+
+	<!-- 그러나 property-placeholder는 암호화한 값을 못읽어온다 -->
+	<!-- 무슨 말이냐면 ENC() 이 문자열 통째로 들어간다는 말 -->
+	<!-- 암호화한 것을 디코딩해서 넣어줘야 한다. -->
+	
+	
+	<!-- 복호화에 이런 알고리즘이 쓰였다는 것 -->
+	<bean id="environmentVariablesConfiguration" class="org.jasypt.encryption.pbe.config.EnvironmentStringPBEConfig">
+		<property name="algorithm" value="PBEWithMD5AndDES"></property>
+		<property name="passwordEnvName" value="APP_ENCRIPTION_PASSWORD"></property>
+	</bean>
+	
+	<!-- password를 통해 복호화를 한다 -->
+	<bean id="configurationEncryptor" class="org.jasypt.encryption.pbe.StandardPBEStringEncryptor">
+		<property name="config" ref="environmentVariablesConfiguration"></property>
+		<property name="password" value="gjwlsrudwkd"></property>
+	</bean>
+	
+	<!-- properties 파일에서 키와 밸류를 읽어온다 -->
+	<bean id="propertyConfigurer" class="org.jasypt.spring4.properties.EncryptablePropertyPlaceholderConfigurer">
+		<constructor-arg ref="configurationEncryptor"/>
+		<property name="locations">
+			<list>
+				<value>classpath:jdbc.properties</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+
+	<!-- 마이바티스 설정 -->
+	<!-- xml 빈이 구현할 인터페이스가 있는 패키지 경로 -->
+	<!-- <mybatis-spring:scan base-package="com.coderby.myapp"/> --> 
+	<mybatis-spring:scan base-package="com.coderby.myapp.board.dao"/> 
+	<mybatis-spring:scan base-package="com.coderby.myapp.member.dao"/> 
+	
+	<!-- 컴포넌트 스캔 설정 -->
+	<context:component-scan base-package="com.coderby.myapp" />
+	<!-- <context:component-scan base-package="com.coderby.myapp.board.service" /> -->
+	<!-- <context:component-scan base-package="com.coderby.myapp.member.service" /> -->
+	
+	<!-- 마이바티스에서 사용하는 빈, DB에 연결한다. -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="mapperLocations" value="classpath:com/coderby/myapp/**/*.xml"></property>
+	</bean>	
+
+	<bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+		
+	<tx:annotation-driven/>
+	
+		<bean id="exceptionResolver"
+	class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="java.lang.RuntimeException">
+					error/runtime
+				</prop>
+			</props>
+		</property>
+		<property name="defaultErrorView" value="error/default"/>
+	</bean>	
+		
+</beans>
